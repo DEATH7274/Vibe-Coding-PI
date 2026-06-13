@@ -1,0 +1,29 @@
+#очень важное правило: нельзя просто кликнуть по index.html два раза, чтобы он открылся в браузере как файл file:///....
+#Браузеры блокируют загрузку 3D-моделей локально из соображений безопасности (ошибка CORS). Страницу нужно обязательно запускать через локальный сервер.
+#остаточно нажать иконку нужного браузера (Chrome/Firefox) в правом верхнем углу редактора. PyCharm сам поднимет локальный сервер http://localhost:63342/... и модель успешно загрузится.
+
+</body>
+#тело самого кода. <script> должен будет остаться внизу, тело сам пишите
+
+
+<script>
+    // Предположим, мы хотим показать модель с ID = 5
+    const modelId = 5;
+    const viewer = document.querySelector('#my-3d-viewer');
+    const titleElement = document.querySelector('#model-title');
+
+    // Делаем запрос к вашему Python API
+    fetch(`/api/models/${modelId}`)
+        .then(response => response.json())
+        .then(data => {
+            // Подставляем название на страницу
+            titleElement.textContent = data.title;
+
+            // МАГИЯ ЗДЕСЬ: Подставляем ссылку на файл из базы данных в атрибут src
+            viewer.src = data.file_url;
+        })
+        .catch(error => {
+            console.error("Ошибка загрузки данных модели:", error);
+            titleElement.textContent = "Ошибка загрузки";
+        });
+</script>
