@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 style="margin-bottom:20px;">⚙️ Админка</h1>
+<div class="card">
+    <h3>👥 Пользователи</h3>
+    {% for u in users %}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #eee;">
+        <div>
+            <strong>{{ u.username }}</strong> 
+            {% if u.is_admin %}<span style="background:#ffd54f;padding:2px 5px;border-radius:4px;font-size:0.8em;">ADMIN</span>{% endif %}
+            <br><small>{{ u.email }}</small>
+        </div>
+        <div>
+            {% if u.id != current_user.id %}
+            {% if not u.is_admin %}
+            <button onclick="fetch(`/admin/make_admin/${u.id}`, {method:'POST'}).then(()=>location.reload())" style="cursor:pointer;">Сделать админом</button>
+            {% else %}
+            <button onclick="fetch(`/admin/remove_admin/${u.id}`, {method:'POST'}).then(()=>location.reload())" style="cursor:pointer;">Убрать права</button>
+            {% endif %}
+            <button onclick="if(confirm('Удалить?')) fetch(`/admin/delete_user/${u.id}`, {method:'POST'}).then(()=>location.reload())" style="background:red;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">Удалить</button>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<div class="card">
+    <h3>📁 Все файлы</h3>
+    {% for f in files %}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #eee;">
+        <span>📄 {{ f.original_name }} ({{ f.username }})</span>
+        <button onclick="if(confirm('Удалить файл?')) fetch(`/admin/delete_file/${f.id}`, {method:'POST'}).then(()=>location.reload())" style="background:red;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">Удалить</button>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

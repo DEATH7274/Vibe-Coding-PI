@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <h1>🔐 Вход</h1>
+        <form method="POST">
+            <div class="form-group">
+                <label>Логин</label>
+                <input type="text" name="username" required>
+            </div>
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Войти</button>
+        </form>
+        <p style="text-align:center;margin-top:15px;">Нет аккаунта? <a href="{{ url_for('register') }}">Зарегистрироваться</a></p>
+        <p style="text-align:center;margin-top:10px;font-size:0.8em;color:#888;">Админ: admin / admin123</p>
+    </div>
+</div>
+{% endblock %}

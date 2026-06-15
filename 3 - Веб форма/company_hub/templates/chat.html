@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="padding:0;overflow:hidden;">
+    <div style="padding:15px;background:#1a73e8;color:white;font-weight:bold;">💬 Общий чат</div>
+    <div class="chat-container">
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Сообщение..." autocomplete="off">
+            <button onclick="sendMessage()" style="padding:10px 20px;background:#1a73e8;color:white;border:none;border-radius:24px;cursor:pointer;">Отправить</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const chatBox = document.getElementById('chatMessages');
+let lastId = 0;
+async function loadMsgs() {
+    const res = await fetch(`/chat/messages?after_id=${lastId}`);
+    const data = await res.json();
+    data.messages.forEach(m => {
+        const div = document.createElement('div');
+        div.className = `chat-msg ${m.is_mine ? 'mine' : 'theirs'}`;
+        div.innerHTML = `<small>${m.username}</small><br>${m.message}`;
+        chatBox.appendChild(div);
+    });
+    if(data.last_id) lastId = data.last_id;
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+async function sendMessage() {
+    const inp = document.getElementById('chatInput');
+    if(!inp.value.trim()) return;
+    await fetch('/chat/send', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:inp.value})});
+    inp.value = '';
+    loadMsgs();
+}
+document.getElementById('chatInput').addEventListener('keypress', e => { if(e.key==='Enter') sendMessage(); });
+loadMsgs();
+setInterval(loadMsgs, 2000);
+</script>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 style="margin-bottom:20px;">📊 Панель управления</h1>
+<div class="stats">
+    <div class="stat-card"><div class="number">{{ file_count }}</div><div>Файлов</div></div>
+    <div class="stat-card"><div class="number">{{ user_count }}</div><div>Людей</div></div>
+    <div class="stat-card"><div class="number">{{ msg_count }}</div><div>Сообщений</div></div>
+</div>
+<div class="card">
+    <h2>📄 Последние файлы</h2>
+    {% if recent_files %}
+    <table class="files-table">
+        <tr><th>Файл</th><th>Кто</th><th>Дата</th><th></th></tr>
+        {% for f in recent_files %}
+        <tr>
+            <td>📄 {{ f.original_name }}</td>
+            <td>{{ f.username }}</td>
+            <td>{{ f.created_at[:10] }}</td>
+            <td><a href="{{ url_for('download_file', filename=f.filename) }}">Скачать</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p style="color:#888;">Файлов пока нет.</p>
+    {% endif %}
+</div>
+{% endblock %}

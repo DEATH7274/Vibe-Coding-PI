@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 style="margin-bottom:20px;">📁 Файлы</h1>
+<div class="card">
+    <h2>➕ Загрузить</h2>
+    <form method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data" class="upload-area" onclick="document.getElementById('fileInput').click()">
+        <p>Нажми, чтобы выбрать файл</p>
+        <input type="file" name="file" id="fileInput" required style="display:none;">
+        <br>
+        <input type="text" name="description" placeholder="Описание (необязательно)" style="margin-top:10px;width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;">
+        <br>
+        <button type="submit" class="btn btn-primary" style="width:auto;margin-top:10px;">Загрузить</button>
+    </form>
+</div>
+<div class="card">
+    <h2>📋 Список</h2>
+    {% if files %}
+    <table class="files-table">
+        <tr><th>Файл</th><th>Описание</th><th>Кто</th><th>Дата</th><th></th></tr>
+        {% for f in files %}
+        <tr>
+            <td>📄 {{ f.original_name }}</td>
+            <td>{{ f.description or '-' }}</td>
+            <td>{{ f.username }}</td>
+            <td>{{ f.created_at[:16] }}</td>
+            <td>
+                <a href="{{ url_for('download_file', filename=f.filename) }}">Скачать</a>
+                {% if current_user.is_admin or f.uploaded_by == current_user.id %}
+                <form method="POST" action="{{ url_for('delete_file', file_id=f.id) }}" style="display:inline;" onsubmit="return confirm('Удалить?');">
+                    <button type="submit" class="btn btn-danger" style="font-size:0.8em;">🗑</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p style="color:#888;">Нет файлов.</p>
+    {% endif %}
+</div>
+{% endblock %}
