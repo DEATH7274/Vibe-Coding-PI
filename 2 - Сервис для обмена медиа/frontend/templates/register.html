@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Регистрация</title>
+</head>
+<body>
+    <h2>Регистрация нового пользователя</h2>
+
+    <form method="POST" action="/register">
+        <div>
+            <label>Логин:</label>
+            <input type="text" name="login" required>
+        </div>
+        <div>
+            <label>Имя:</label>
+            <input type="text" name="name" required>
+        </div>
+        <div>
+            <label>Пароль:</label>
+            <input type="password" name="password" required>
+        </div>
+
+        <br>
+
+        <div>
+            <input type="checkbox" id="policy-checkbox"
+                   onchange="document.getElementById('register-btn').disabled = !this.checked;">
+            <label for="policy-checkbox">Принять политику конфиденциальности, которую мы не прописали</label>
+        </div>
+
+        <br>
+
+        <button type="submit" id="register-btn" disabled>Зарегистрироваться</button>
+    </form>
+</body>
+</html>
