@@ -1,5 +1,6 @@
 import os
 import datetime
+import secrets
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -13,6 +14,12 @@ app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database.db')
+
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx'}
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -117,7 +124,7 @@ def register():
         conn = get_db()
         existing = conn.execute("SELECT id FROM users WHERE username=? OR email=?", (username, email)).fetchone()
         if existing:
-            flash("Пользователь уже существует", "error")
+            flash("Имя пользователя или почта уже используется", "error")
             conn.close()
             return render_template('register.html')
         pw_hash = generate_password_hash(password)
@@ -158,27 +165,54 @@ def files_page():
     conn.close()
     return render_template('files.html', files=files)
 
+
 @app.route('/upload', methods=['POST'])
 @login_required
 def upload_file():
+    # Проверка наличия файла в запросе
     if 'file' not in request.files:
         flash("Файл не выбран", "error")
         return redirect(url_for('files_page'))
-    f = request.files['file']
-    if f.filename == '':
+
+    file = request.files['file']
+
+    # Проверка, что файл выбран
+    if file.filename == '':
         flash("Файл не выбран", "error")
         return redirect(url_for('files_page'))
-    if f:
-        filename = f"{datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{f.filename}"
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        f.save(filepath)
-        description = request.form.get('description', '')
+
+    # Проверка расширения файла
+    if not allowed_file(file.filename):
+        flash("Недопустимый тип файла", "error")
+        return redirect(url_for('files_page'))
+
+    try:
+        # Безопасное создание имени файла
+        file_ext = file.filename.rsplit('.', 1)[1].lower()
+        safe_filename = f"{secrets.token_hex(8)}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.{file_ext}"
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], safe_filename)
+
+        # Сохранение файла
+        file.save(filepath)
+
+        # Получение описания из формы
+        description = request.form.get('description', '').strip()
+
+        # Сохранение информации о файле в БД
         conn = get_db()
-        conn.execute("INSERT INTO files (filename, original_name, uploaded_by, description) VALUES (?, ?, ?, ?)",
-                      (filename, f.filename, current_user.id, description))
+        conn.execute(
+            "INSERT INTO files (filename, original_name, uploaded_by, description) VALUES (?, ?, ?, ?)",
+            (safe_filename, file.filename, current_user.id, description)
+        )
         conn.commit()
         conn.close()
-        flash("Файл загружен!", "success")
+
+        flash("Файл успешно загружен!", "success")
+
+    except Exception as e:
+        print(f"Ошибка при сохранении файла: {e}")  # Логирование ошибки
+        flash("Ошибка при загрузке файла", "error")
+
     return redirect(url_for('files_page'))
 
 @app.route('/download/<filename>')
