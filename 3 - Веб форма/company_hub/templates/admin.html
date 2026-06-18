@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 style="margin-bottom:20px;">⚙️ Админка</h1>
+
 <div class="card">
     <h3>👥 Пользователи</h3>
     {% for u in users %}
@@ -12,24 +13,87 @@
         </div>
         <div>
             {% if u.id != current_user.id %}
-            {% if not u.is_admin %}
-            <button onclick="fetch(`/admin/make_admin/${u.id}`, {method:'POST'}).then(()=>location.reload())" style="cursor:pointer;">Сделать админом</button>
+                {% if not u.is_admin %}
+                <button onclick="makeAdmin({{ u.id }})" style="cursor:pointer;">Сделать админом</button>
+                {% else %}
+                <button onclick="removeAdmin({{ u.id }})" style="cursor:pointer;">Убрать права</button>
+                {% endif %}
+                <button onclick="deleteUser({{ u.id }}, '{{ u.username }}')" style="background:red;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">Удалить</button>
             {% else %}
-            <button onclick="fetch(`/admin/remove_admin/${u.id}`, {method:'POST'}).then(()=>location.reload())" style="cursor:pointer;">Убрать права</button>
-            {% endif %}
-            <button onclick="if(confirm('Удалить?')) fetch(`/admin/delete_user/${u.id}`, {method:'POST'}).then(()=>location.reload())" style="background:red;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">Удалить</button>
+                <span style="color:#999;font-size:0.9em;">(Это вы)</span>
             {% endif %}
         </div>
     </div>
     {% endfor %}
 </div>
+
 <div class="card">
     <h3>📁 Все файлы</h3>
     {% for f in files %}
     <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #eee;">
         <span>📄 {{ f.original_name }} ({{ f.username }})</span>
-        <button onclick="if(confirm('Удалить файл?')) fetch(`/admin/delete_file/${f.id}`, {method:'POST'}).then(()=>location.reload())" style="background:red;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">Удалить</button>
+        <button onclick="deleteFile({{ f.id }})" style="background:red;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">Удалить</button>
     </div>
     {% endfor %}
 </div>
+
+<script>
+async function makeAdmin(userId) {
+    if (!confirm('Сделать этого пользователя администратором?')) return;
+    try {
+        const response = await fetch(`/admin/make_admin/${userId}`, {method:'POST'});
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Ошибка: ' + response.status);
+        }
+    } catch (err) {
+        alert('Ошибка сети: ' + err.message);
+    }
+}
+
+async function removeAdmin(userId) {
+    if (!confirm('Снять права администратора?')) return;
+    try {
+        const response = await fetch(`/admin/remove_admin/${userId}`, {method:'POST'});
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Ошибка: ' + response.status);
+        }
+    } catch (err) {
+        alert('Ошибка сети: ' + err.message);
+    }
+}
+
+async function deleteUser(userId, username) {
+    if (!confirm(`УДАЛИТЬ пользователя "${username}" и ВСЕ его файлы? Это действие необратимо!`)) return;
+    try {
+        const response = await fetch(`/admin/delete_user/${userId}`, {method:'POST'});
+        if (response.ok) {
+            const data = await response.json();
+            alert(`Пользователь удалён. Удалено файлов: ${data.deleted_files || 0}`);
+            location.reload();
+        } else {
+            alert('Ошибка: ' + response.status);
+        }
+    } catch (err) {
+        alert('Ошибка сети: ' + err.message);
+    }
+}
+
+async function deleteFile(fileId) {
+    if (!confirm('Удалить этот файл?')) return;
+    try {
+        const response = await fetch(`/admin/delete_file/${fileId}`, {method:'POST'});
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Ошибка: ' + response.status);
+        }
+    } catch (err) {
+        alert('Ошибка сети: ' + err.message);
+    }
+}
+</script>
 {% endblock %}
