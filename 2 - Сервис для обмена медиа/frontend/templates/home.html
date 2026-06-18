@@ -37,8 +37,35 @@
             transition: opacity 0.2s;
         }
         .header-btn:hover { opacity: 0.8; }
-        .btn-upload { background-color: #1877f2; } /* Синий, как призыв к действию */
-        .btn-logout { background-color: #dc3545; } /* Красный для выхода */
+        .btn-upload { background-color: #1877f2; }
+        .btn-logout { background-color: #dc3545; }
+
+        /* === СТИЛИ ДЛЯ ВСПЛЫВАЮЩИХ УВЕДОМЛЕНИЙ === */
+        #flash-container {
+            position: fixed;
+            top: 20px; /* Отступ сверху */
+            left: 50%; /* Сдвигаем на середину экрана */
+            transform: translateX(-50%); /* Центрируем относительно своей же ширины */
+            z-index: 1000; /* Поверх всего остального */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none; /* Чтобы окно не блокировало клики по сайту */
+            transition: opacity 0.5s ease; /* Плавное исчезновение */
+        }
+
+        .flash-msg {
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            text-align: center;
+        }
+
+        /* Цвета в зависимости от категории сообщения из auth.py */
+        .flash-success { background-color: #4caf50; } /* Зеленый для успеха */
+        .flash-error { background-color: #f44336; }   /* Красный для ошибок */
 
         /* Контейнер ленты */
         .feed-container {
@@ -46,7 +73,7 @@
             margin: 20px auto;
             display: flex;
             flex-direction: column;
-            gap: 20px; /* Отступ между карточками по вертикали */
+            gap: 20px;
             padding: 0 10px;
         }
 
@@ -86,11 +113,19 @@
 </head>
 <body>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div id="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash-msg flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
     <header>
         <a href="/upload" class="header-btn btn-upload">➕ Загрузить</a>
-
         <p class="logo">Лента моделей</p>
-
         <a href="/logout" class="header-btn btn-logout">🚪 Выйти</a>
     </header>
 
@@ -114,7 +149,6 @@
 
                     <div class="post-meta">
                         <span>Автор: <span class="author-name">{{ model.author.username }}</span></span>
-
                         <span>{{ model.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
                     </div>
                 </div>
@@ -127,6 +161,25 @@
             </div>
         {% endif %}
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const flashContainer = document.getElementById("flash-container");
+
+            if (flashContainer) {
+                // Ждем 5000 миллисекунд (5 секунд)
+                setTimeout(() => {
+                    // Плавно растворяем элемент
+                    flashContainer.style.opacity = "0";
+
+                    // Полностью удаляем его из HTML через 0.5с (время анимации перехода)
+                    setTimeout(() => {
+                        flashContainer.remove();
+                    }, 500);
+                }, 5000);
+            }
+        });
+    </script>
 
 </body>
 </html>

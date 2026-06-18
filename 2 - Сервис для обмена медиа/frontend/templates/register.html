@@ -2,36 +2,224 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Регистрация</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@800&display=swap" rel="stylesheet">
+
+    <style>
+        /* Общий фон и центрирование */
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #e9ecef;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Прямоугольник 60% ширины */
+        .form-container {
+            background-color: #fafafa;
+            width: 60vw;
+            max-width: 500px;
+            min-width: 320px;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #333;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .input-group {
+            width: 100%;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        .input-group input[type="text"],
+        .input-group input[type="password"] {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            background-color: white;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input[type="text"]:focus,
+        .input-group input[type="password"]:focus {
+            outline: none;
+            border-color: #4285f4;
+        }
+
+        /* Выравнивание чекбокса и текста */
+        .checkbox-group {
+            width: 100%;
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            gap: 10px;
+            text-align: left;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            margin-top: 4px;
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.4;
+            cursor: pointer;
+        }
+
+        /* Общие стили для кнопок */
+        .btn {
+            width: 50%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Roboto', sans-serif;
+            font-weight: 800;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        /* Активное состояние кнопки регистрации (Синяя) */
+        .btn-primary {
+            background-color: #4285f4;
+            color: #0b3a8a;
+            margin-bottom: 15px; /* Отступ до нижней кнопки */
+        }
+
+        .btn-primary:hover {
+            opacity: 0.85;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        /* Неактивное состояние (пока чекбокс не нажат) */
+        .btn-primary:disabled {
+            background-color: #cccccc;
+            color: #888888;
+            cursor: not-allowed;
+            opacity: 1;
+            transform: none;
+        }
+
+        /* Новая кнопка "Войти" (Такая же синяя) */
+        .btn-login {
+            background-color: #4285f4;
+            color: #0b3a8a;
+        }
+
+        .btn-login:hover {
+            opacity: 0.85;
+        }
+
+        .btn-login:active {
+            transform: scale(0.98);
+        }
+
+        /* Стилизация ошибок от Flask */
+        .flash-messages {
+            width: 100%;
+            padding: 0;
+            list-style: none;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .flash-messages li {
+            color: #842029;
+            background-color: #f8d7da;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            font-size: 14px;
+            border: 1px solid #f5c2c7;
+        }
+    </style>
 </head>
 <body>
-    <h2>Регистрация нового пользователя</h2>
 
-    <form method="POST" action="/register">
-        <div>
-            <label>Логин:</label>
-            <input type="text" name="login" required>
-        </div>
-        <div>
-            <label>Имя:</label>
-            <input type="text" name="name" required>
-        </div>
-        <div>
-            <label>Пароль:</label>
-            <input type="password" name="password" required>
-        </div>
+    <div class="form-container">
+        <h2>Регистрация нового пользователя</h2>
 
-        <br>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul class="flash-messages">
+            {% for message in messages %}
+              <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
 
-        <div>
-            <input type="checkbox" id="policy-checkbox"
-                   onchange="document.getElementById('register-btn').disabled = !this.checked;">
-            <label for="policy-checkbox">Принять политику конфиденциальности, которую мы не прописали</label>
-        </div>
+        <form method="POST" action="/register">
+            <div class="input-group">
+                <label>Логин (Email):</label>
+                <input type="text" name="login" required>
+            </div>
 
-        <br>
+            <div class="input-group">
+                <label>Имя (Никнейм):</label>
+                <input type="text" name="name" required>
+            </div>
 
-        <button type="submit" id="register-btn" disabled>Зарегистрироваться</button>
-    </form>
+            <div class="input-group">
+                <label>Пароль:</label>
+                <input type="password" name="password" required>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="policy-checkbox" name="policy_checkbox"
+                       onchange="document.getElementById('register-btn').disabled = !this.checked;">
+                <label for="policy-checkbox">Принять политику конфиденциальности, которую мы не прописали</label>
+            </div>
+
+            <button type="submit" id="register-btn" class="btn btn-primary" disabled>Зарегистрироваться</button>
+        </form>
+
+        <form action="/login" method="GET" style="width: 100%;">
+            <button type="submit" class="btn btn-login">Есть аккаунт? Войти</button>
+        </form>
+    </div>
+
 </body>
 </html>

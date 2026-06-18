@@ -2,39 +2,170 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Вход</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@800&display=swap" rel="stylesheet">
+
+    <style>
+        /* Центрируем всё окно целиком */
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #e9ecef; /* Нейтральный фон страницы для контраста с формой */
+            font-family: Arial, sans-serif;
+        }
+
+        /* Тот самый прямоугольник для полей ввода */
+        .login-container {
+            background-color: #fafafa;
+            width: 60vw; /* Занимает ровно 60% ширины экрана */
+            max-width: 500px; /* Ограничитель, чтобы на огромных мониторах форма не растянулась на метр */
+            min-width: 320px; /* Ограничитель для мобильных телефонов */
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1); /* Легкая тень для объема */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #333;
+            margin-bottom: 25px;
+        }
+
+        /* Выравнивание элементов внутри форм */
+        form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .input-group {
+            width: 100%;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            background-color: white;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #4285f4; /* Подсветка поля при вводе текста */
+        }
+
+        /* Общие стили для обеих кнопок */
+        .btn {
+            width: 50%; /* Ширина ровно половина от прямоугольника #fafafa */
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Roboto', sans-serif;
+            font-weight: 800; /* Тот самый ExtraBold */
+            font-size: 16px;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            text-align: center;
+        }
+
+        .btn:hover {
+            opacity: 0.85; /* Эффект наведения */
+        }
+
+        .btn:active {
+            transform: scale(0.98); /* Легкое нажатие */
+        }
+
+        /* Кнопка "Войти" */
+        .btn-login {
+            background-color: #4285f4; /* Насыщенный синий */
+            color: #0b3a8a; /* Текст на 3 тона темнее */
+            margin-bottom: 15px; /* Отступ до кнопки регистрации */
+        }
+
+        /* Кнопка "Регистрация" */
+        .btn-register {
+            background-color: #e0e0e0; /* Светло-серый */
+            color: #545454; /* Текст на 3 тона темнее */
+        }
+
+        /* Стилизация ошибок Flask */
+        .flash-messages {
+            width: 100%;
+            padding: 0;
+            list-style: none;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .flash-messages li {
+            color: #842029;
+            background-color: #f8d7da;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            font-size: 14px;
+            border: 1px solid #f5c2c7;
+        }
+    </style>
 </head>
 <body>
-    <h2>Вход в систему</h2>
 
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <ul style="color: red;">
-        {% for message in messages %}
-          <li>{{ message }}</li>
-        {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
+    <div class="login-container">
+        <h2>Вход в систему</h2>
 
-    <form method="POST" action="/login">
-        <div>
-            <label>Логин:</label>
-            <input type="text" name="login" required>
-        </div>
-        <div>
-            <label>Пароль:</label>
-            <input type="password" name="password" required>
-        </div>
-        <br>
-        <button type="submit">Войти</button>
-    </form>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul class="flash-messages">
+            {% for message in messages %}
+              <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
 
-    <br>
+        <form method="POST" action="/login">
+            <div class="input-group">
+                <label>Логин:</label>
+                <input type="text" name="login" required>
+            </div>
+            <div class="input-group">
+                <label>Пароль:</label>
+                <input type="password" name="password" required>
+            </div>
 
-    <form action="/register" method="GET">
-        <button type="submit">Нет аккаунта? Зарегистрироваться</button>
-    </form>
+            <button type="submit" class="btn btn-login">Войти</button>
+        </form>
+
+        <form action="/register" method="GET" style="width: 100%;">
+            <button type="submit" class="btn btn-register">Регистрация</button>
+        </form>
+    </div>
 
 </body>
 </html>
