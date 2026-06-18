@@ -2,70 +2,268 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Загрузка 3D модели</title>
-    <style>
-        /* Базовые стили для красоты и скрытия блоков */
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        .hidden { display: none; }
-        .form-group { margin-bottom: 15px; }
 
-        /* Стили для полосы загрузки */
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@800&display=swap" rel="stylesheet">
+
+    <style>
+        /* Общий фон и центрирование */
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #e9ecef;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative; /* Чтобы абсолютно позиционированная кнопка ориентировалась по body */
+        }
+
+        /* === КНОПКА ВОЗВРАТА СЛЕВА СВЕРХУ === */
+        .btn-back-home {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            text-decoration: none;
+            color: #555;
+            font-family: 'Roboto', sans-serif;
+            font-weight: 800;
+            font-size: 15px;
+            background-color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-back-home:hover {
+            color: #4285f4;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+
+        /* Прямоугольник 60% ширины экрана цвета #fafafa */
+        .upload-container {
+            background-color: #fafafa;
+            width: 60vw;
+            max-width: 500px;
+            min-width: 320px;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #333;
+            margin-bottom: 25px;
+        }
+
+        /* Управляющий класс скрытия элементов */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Стили групп ввода */
+        .input-group {
+            width: 100%;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        /* Кастомизация текстового поля и textarea */
+        .input-group input[type="text"],
+        .input-group textarea {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            background-color: white;
+            transition: border-color 0.3s;
+            font-family: Arial, sans-serif;
+            resize: vertical;
+        }
+
+        .input-group input[type="text"]:focus,
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #4285f4;
+        }
+
+        /* Красивое поле для выбора файла */
+        .input-group input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            background-color: white;
+            cursor: pointer;
+            box-sizing: border-box;
+            font-size: 15px;
+        }
+
+        .input-group input[type="file"]:hover {
+            border-color: #4285f4;
+        }
+
+        /* Стилизация чекбокса прав */
+        .checkbox-group {
+            width: 100%;
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            gap: 10px;
+            text-align: left;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            margin-top: 4px;
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.4;
+            cursor: pointer;
+        }
+
+        /* Фирменные кнопки 50% ширины */
+        .btn {
+            width: 50%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Roboto', sans-serif;
+            font-weight: 800;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background-color: #4285f4;
+            color: #0b3a8a;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.85;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        /* Состояние заблокированной кнопки */
+        .btn-primary:disabled {
+            background-color: #cccccc;
+            color: #888888;
+            cursor: not-allowed;
+            transform: none;
+            opacity: 1;
+        }
+
+        /* Обновленные стили для полосы загрузки */
         #progress-container {
             width: 100%;
             background-color: #e0e0e0;
-            border-radius: 5px;
+            border-radius: 8px;
             margin-top: 15px;
+            overflow: hidden;
         }
+
         #progress-bar {
             width: 0%;
-            height: 20px;
-            background-color: #4caf50;
-            border-radius: 5px;
+            height: 24px;
+            background-color: #4285f4;
             text-align: center;
-            color: white;
-            line-height: 20px;
-            font-size: 12px;
-            transition: width 0.3s;
+            color: #0b3a8a;
+            line-height: 24px;
+            font-family: 'Roboto', sans-serif;
+            font-weight: 800;
+            font-size: 14px;
+            transition: width 0.1s linear;
+        }
+
+        #upload-status p {
+            color: #555;
+            font-size: 15px;
+            margin-bottom: 5px;
         }
     </style>
 </head>
 <body>
-    <h2>Загрузить новую 3D модель</h2>
 
-    <div class="form-group">
-        <label>Выберите файл (.glb):</label><br>
-        <input type="file" id="file-input" accept=".glb">
-    </div>
+    <a href="/home" class="btn-back-home">⬅ В ленту</a>
 
-    <div id="meta-fields" class="hidden">
-        <div class="form-group">
-            <label>Название модели:</label><br>
-            <input type="text" id="title" placeholder="Например: Спортивный автомобиль" required>
+    <div class="upload-container">
+        <h2>Загрузить новую 3D модель</h2>
+
+        <div class="input-group">
+            <label>Выберите файл (.glb):</label>
+            <input type="file" id="file-input" accept=".glb">
         </div>
 
-        <div class="form-group">
-            <label>Описание:</label><br>
-            <textarea id="description" rows="3" placeholder="Расскажите о модели..."></textarea>
+        <div id="meta-fields" class="hidden" style="width: 100%;">
+            <div class="input-group">
+                <label>Название модели:</label>
+                <input type="text" id="title" placeholder="Например: Спортивный автомобиль" required>
+            </div>
+
+            <div class="input-group">
+                <label>Описание:</label>
+                <textarea id="description" rows="3" placeholder="Расскажите о модели..."></textarea>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="rights-checkbox">
+                <label for="rights-checkbox">Я подтверждаю, что имею права на эту модель и разрешаю её использование в общем доступе.</label>
+            </div>
+
+            <button id="upload-btn" class="btn btn-primary" disabled>Загрузить модель</button>
         </div>
 
-        <div class="form-group">
-            <input type="checkbox" id="rights-checkbox">
-            <label for="rights-checkbox">Я подтверждаю, что имею права на эту модель и разрешаю её использование в общем доступе.</label>
+        <div id="upload-status" class="hidden" style="width: 100%;">
+            <p>Загрузка может занять до нескольких минут...</p>
+            <div id="progress-container">
+                <div id="progress-bar">0%</div>
+            </div>
         </div>
 
-        <button id="upload-btn" disabled>Загрузить модель</button>
-    </div>
-
-    <div id="upload-status" class="hidden">
-        <p>Загрузка может занять до нескольких минут...</p>
-        <div id="progress-container">
-            <div id="progress-bar">0%</div>
+        <div id="success-message" class="hidden" style="width: 100%;">
+            <h3 style="color: #2e7d32; margin-bottom: 20px;">Файл успешно загружен!</h3>
+            <a href="/home" class="btn btn-primary">На главную</a>
         </div>
-    </div>
 
-    <div id="success-message" class="hidden">
-        <h3 style="color: green;">Файл успешно загружен!</h3>
-        <a href="/home"><button>На главную</button></a>
+        <div style="width: 100%; margin-top: 25px; text-align: center; border-top: 1px solid #ddd; padding-top: 20px;">
+            <a href="/profile" class="btn" style="background-color: #e0e0e0; color: #545454; display: inline-block;">Мои модели</a>
+        </div>
     </div>
 
     <script>
@@ -84,7 +282,6 @@
         fileInput.addEventListener('change', function() {
             if (this.files.length > 0) {
                 metaFields.classList.remove('hidden');
-                // Автоматически подставляем имя файла без расширения в поле "Название"
                 let fileName = this.files[0].name.replace('.glb', '');
                 titleInput.value = fileName;
             } else {
@@ -105,22 +302,18 @@
                 return;
             }
 
-            // Прячем форму, показываем статус загрузки
             metaFields.classList.add('hidden');
             fileInput.disabled = true;
             uploadStatus.classList.remove('hidden');
 
-            // Упаковываем данные для отправки (Файл + Текст)
             const formData = new FormData();
             formData.append('file', file);
             formData.append('title', titleInput.value);
             formData.append('description', descInput.value);
 
-            // Настраиваем XHR запрос
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '/upload', true);
 
-            // Отслеживаем прогресс отправки
             xhr.upload.onprogress = function(event) {
                 if (event.lengthComputable) {
                     let percentComplete = Math.round((event.loaded / event.total) * 100);
@@ -129,26 +322,23 @@
                 }
             };
 
-            // Когда загрузка завершена (ответ от сервера)
             xhr.onload = function() {
                 if (xhr.status === 200) {
                     uploadStatus.classList.add('hidden');
                     successMessage.classList.remove('hidden');
                 } else {
                     alert('Ошибка загрузки: ' + xhr.responseText);
-                    // Возвращаем интерфейс обратно при ошибке
                     uploadStatus.classList.add('hidden');
                     metaFields.classList.remove('hidden');
                     fileInput.disabled = false;
                 }
             };
 
-            // Если пропал интернет
             xhr.onerror = function() {
                 alert('Произошла ошибка сети во время загрузки.');
             };
 
-            xhr.send(formData); // Отправляем на сервер!
+            xhr.send(formData);
         });
     </script>
 </body>

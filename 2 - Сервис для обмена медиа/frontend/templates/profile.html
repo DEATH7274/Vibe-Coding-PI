@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои модели</title>
+
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@800&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; padding-bottom: 40px;}
+
+        header {
+            display: flex; justify-content: center; align-items: center;
+            padding: 15px 20px; background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100;
+        }
+
+        .logo { font-size: 22px; font-weight: bold; color: #333; margin: 0; }
+
+        .feed-container {
+            max-width: 600px; margin: 20px auto; display: flex; flex-direction: column; gap: 20px; padding: 0 10px;
+        }
+
+        .post-card {
+            background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.12); padding: 15px;
+            transition: opacity 0.3s ease; /* Для плавного исчезновения при удалении */
+        }
+
+        model-viewer { width: 100%; height: 400px; background-color: #e9ecef; border-radius: 8px; outline: none; }
+
+        .post-info { margin-top: 15px; }
+        .post-title { font-size: 18px; font-weight: bold; margin: 0 0 8px 0; color: #1c1e21; }
+        .post-meta {
+            font-size: 13px; color: #65676b; display: flex; justify-content: space-between; align-items: center;
+            border-top: 1px solid #e4e6eb; padding-top: 10px; margin-top: 10px;
+        }
+
+        /* Кнопка удаления */
+        .btn-delete-model {
+            background-color: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 6px;
+            font-weight: bold; cursor: pointer; transition: 0.2s;
+        }
+        .btn-delete-model:hover { background-color: #c82333; }
+
+        /* Синяя кнопка во всю ширину снизу */
+        .btn-full {
+            display: block; width: 100%; padding: 16px; margin-top: 30px;
+            background-color: #4285f4; color: #0b3a8a; border: none; border-radius: 8px;
+            font-family: 'Roboto', sans-serif; font-weight: 800; font-size: 18px;
+            text-align: center; text-decoration: none; cursor: pointer; transition: 0.2s; box-sizing: border-box;
+        }
+        .btn-full:hover { opacity: 0.85; }
+
+        /* Всплывашка (Toast) таймера удаления снизу */
+        #undo-toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background-color: #333; color: white; padding: 12px 20px; border-radius: 8px;
+            display: flex; align-items: center; gap: 15px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            z-index: 1000; transition: opacity 0.3s, transform 0.3s;
+        }
+        .hidden { opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(20px) !important; }
+
+        .undo-text { font-size: 15px; font-family: Arial, sans-serif;}
+        .btn-undo { background: none; border: none; color: #4285f4; font-weight: bold; font-size: 15px; cursor: pointer; padding: 0;}
+        .btn-undo:hover { text-decoration: underline; }
+        .btn-close-toast { background: none; border: none; color: #aaa; font-size: 20px; cursor: pointer; padding: 0; line-height: 1;}
+        .btn-close-toast:hover { color: white; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <p class="logo">Мои модели</p>
+    </header>
+
+    <div class="feed-container">
+        {% if models %}
+            {% for model in models %}
+            <div class="post-card" id="card-{{ model.id }}">
+                <model-viewer src="/{{ model.file_path }}" camera-controls auto-rotate shadow-intensity="1"></model-viewer>
+
+                <div class="post-info">
+                    <h3 class="post-title">{{ model.title }}</h3>
+                    <div class="post-meta">
+                        <button class="btn-delete-model" data-id="{{ model.id }}">Удалить?</button>
+                        <span>{{ model.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div style="text-align: center; color: #65676b; margin-top: 50px;">
+                <h2>Вы еще не загрузили ни одной модели</h2>
+            </div>
+        {% endif %}
+
+        <a href="/home" class="btn-full">В ленту моделей!</a>
+    </div>
+
+    <div id="undo-toast" class="hidden">
+        <span class="undo-text">Удаление через <span id="timer-seconds">10</span> сек.</span>
+        <button class="btn-undo" id="btn-undo">Отменить</button>
+        <button class="btn-close-toast" id="btn-close-toast">&times;</button>
+    </div>
+
+    <script>
+        let activeTimeout;
+        let activeInterval;
+        let pendingModelId = null;
+        let pendingCard = null;
+
+        const undoToast = document.getElementById('undo-toast');
+        const timerSecondsSpan = document.getElementById('timer-seconds');
+        const btnUndo = document.getElementById('btn-undo');
+        const btnCloseToast = document.getElementById('btn-close-toast');
+
+        // Обработчик для всех кнопок "Удалить?"
+        document.querySelectorAll('.btn-delete-model').forEach(button => {
+            button.addEventListener('click', function() {
+                // Если юзер нажимает "Удалить" на другой модели, пока идет таймер первой - удаляем первую досрочно
+                if (pendingModelId !== null) {
+                    executeDeletion();
+                }
+
+                if (confirm("Вы уверены, что хотите удалить эту модель?")) {
+                    pendingModelId = this.getAttribute('data-id');
+                    pendingCard = document.getElementById(`card-${pendingModelId}`);
+                    startTimer();
+                }
+            });
+        });
+
+        function startTimer() {
+            let secondsLeft = 10;
+            timerSecondsSpan.textContent = secondsLeft;
+            undoToast.classList.remove('hidden');
+
+            // Интервал для обновления цифры таймера каждую секунду
+            activeInterval = setInterval(() => {
+                secondsLeft -= 1;
+                timerSecondsSpan.textContent = secondsLeft;
+                if (secondsLeft <= 0) {
+                    clearInterval(activeInterval);
+                }
+            }, 1000);
+
+            // Главный таймер, который сработает через 10 секунд
+            activeTimeout = setTimeout(() => {
+                executeDeletion();
+            }, 10000);
+        }
+
+        // Функция фактического удаления (отправка на бэкенд)
+        function executeDeletion() {
+            if (!pendingModelId) return;
+
+            const idToDelete = pendingModelId;
+            const cardToRemove = pendingCard;
+
+            // Сбрасываем переменные
+            resetToast();
+
+            // Визуально скрываем карточку сразу, чтобы юзер не ждал ответа сети
+            cardToRemove.style.opacity = '0';
+            setTimeout(() => cardToRemove.remove(), 300);
+
+            // Отправляем POST запрос на удаление
+            fetch(`/delete/${idToDelete}`, { method: 'POST' })
+                .then(response => {
+                    if (!response.ok) {
+                        alert("Произошла ошибка при удалении на сервере.");
+                        window.location.reload(); // Перезагружаем страницу, если бэкенд ответил ошибкой
+                    }
+                });
+        }
+
+        // Кнопка "Отменить" - просто сбрасываем таймеры и прячем окно
+        btnUndo.addEventListener('click', () => {
+            resetToast();
+        });
+
+        // Крестик - досрочное закрытие (удаляем мгновенно)
+        btnCloseToast.addEventListener('click', () => {
+            clearInterval(activeInterval);
+            clearTimeout(activeTimeout);
+            executeDeletion();
+        });
+
+        function resetToast() {
+            clearInterval(activeInterval);
+            clearTimeout(activeTimeout);
+            pendingModelId = null;
+            pendingCard = null;
+            undoToast.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

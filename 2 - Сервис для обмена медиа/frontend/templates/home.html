@@ -43,29 +43,49 @@
         /* === СТИЛИ ДЛЯ ВСПЛЫВАЮЩИХ УВЕДОМЛЕНИЙ === */
         #flash-container {
             position: fixed;
-            top: 20px; /* Отступ сверху */
-            left: 50%; /* Сдвигаем на середину экрана */
-            transform: translateX(-50%); /* Центрируем относительно своей же ширины */
-            z-index: 1000; /* Поверх всего остального */
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
             display: flex;
             flex-direction: column;
             gap: 10px;
-            pointer-events: none; /* Чтобы окно не блокировало клики по сайту */
-            transition: opacity 0.5s ease; /* Плавное исчезновение */
+            pointer-events: none;
         }
 
         .flash-msg {
-            padding: 12px 24px;
+            padding: 12px 20px;
             border-radius: 8px;
             color: white;
             font-weight: bold;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            text-align: center;
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            transition: opacity 0.5s ease;
         }
 
-        /* Цвета в зависимости от категории сообщения из auth.py */
-        .flash-success { background-color: #4caf50; } /* Зеленый для успеха */
-        .flash-error { background-color: #f44336; }   /* Красный для ошибок */
+        .flash-success { background-color: #4caf50; }
+        .flash-error { background-color: #f44336; }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .close-btn:hover {
+            opacity: 1;
+        }
 
         /* Контейнер ленты */
         .feed-container {
@@ -86,7 +106,6 @@
             padding: 15px;
         }
 
-        /* Настройки просмотрщика */
         model-viewer {
             width: 100%;
             height: 400px;
@@ -97,7 +116,33 @@
 
         /* Подвал карточки с метаданными */
         .post-info { margin-top: 15px; }
-        .post-title { font-size: 18px; font-weight: bold; margin: 0 0 8px 0; color: #1c1e21; }
+
+        /* НОВЫЕ СТИЛИ: Контейнер для заголовка и кнопки "Скачать" */
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .post-title { font-size: 18px; font-weight: bold; margin: 0; color: #1c1e21; }
+
+        /* Стили самой кнопки скачивания */
+        .btn-download {
+            background-color: #e4e6eb; /* Светло-серый фон как в соцсетях */
+            color: #050505;
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-download:hover { background-color: #d8dadf; }
+
         .post-desc { font-size: 15px; color: #4b4f56; margin: 0 0 10px 0; }
 
         .post-meta {
@@ -117,7 +162,10 @@
         {% if messages %}
             <div id="flash-container">
                 {% for category, message in messages %}
-                    <div class="flash-msg flash-{{ category }}">{{ message }}</div>
+                    <div class="flash-msg flash-{{ category }}">
+                        <span>{{ message }}</span>
+                        <button class="close-btn" aria-label="Закрыть">&times;</button>
+                    </div>
                 {% endfor %}
             </div>
         {% endif %}
@@ -141,7 +189,10 @@
                 </model-viewer>
 
                 <div class="post-info">
-                    <h3 class="post-title">{{ model.title }}</h3>
+                    <div class="post-header">
+                        <h3 class="post-title">{{ model.title }}</h3>
+                        <a href="/{{ model.file_path }}" download class="btn-download">⬇ Скачать</a>
+                    </div>
 
                     {% if model.description %}
                         <p class="post-desc">{{ model.description }}</p>
@@ -164,20 +215,23 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            const flashContainer = document.getElementById("flash-container");
+            const flashMessages = document.querySelectorAll(".flash-msg");
 
-            if (flashContainer) {
-                // Ждем 5000 миллисекунд (5 секунд)
-                setTimeout(() => {
-                    // Плавно растворяем элемент
-                    flashContainer.style.opacity = "0";
+            flashMessages.forEach(msg => {
+                const timer = setTimeout(() => {
+                    msg.style.opacity = "0";
+                    setTimeout(() => msg.remove(), 400);
+                }, 7000);
 
-                    // Полностью удаляем его из HTML через 0.5с (время анимации перехода)
-                    setTimeout(() => {
-                        flashContainer.remove();
-                    }, 500);
-                }, 5000);
-            }
+                const closeBtn = msg.querySelector(".close-btn");
+                if (closeBtn) {
+                    closeBtn.addEventListener("click", () => {
+                        clearTimeout(timer);
+                        msg.style.opacity = "0";
+                        setTimeout(() => msg.remove(), 500);
+                    });
+                }
+            });
         });
     </script>
 
