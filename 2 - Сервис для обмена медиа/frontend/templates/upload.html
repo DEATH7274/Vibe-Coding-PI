@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Загрузка 3D модели</title>
+    <style>
+        /* Базовые стили для красоты и скрытия блоков */
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .hidden { display: none; }
+        .form-group { margin-bottom: 15px; }
+
+        /* Стили для полосы загрузки */
+        #progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        #progress-bar {
+            width: 0%;
+            height: 20px;
+            background-color: #4caf50;
+            border-radius: 5px;
+            text-align: center;
+            color: white;
+            line-height: 20px;
+            font-size: 12px;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <h2>Загрузить новую 3D модель</h2>
+
+    <div class="form-group">
+        <label>Выберите файл (.glb):</label><br>
+        <input type="file" id="file-input" accept=".glb">
+    </div>
+
+    <div id="meta-fields" class="hidden">
+        <div class="form-group">
+            <label>Название модели:</label><br>
+            <input type="text" id="title" placeholder="Например: Спортивный автомобиль" required>
+        </div>
+
+        <div class="form-group">
+            <label>Описание:</label><br>
+            <textarea id="description" rows="3" placeholder="Расскажите о модели..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <input type="checkbox" id="rights-checkbox">
+            <label for="rights-checkbox">Я подтверждаю, что имею права на эту модель и разрешаю её использование в общем доступе.</label>
+        </div>
+
+        <button id="upload-btn" disabled>Загрузить модель</button>
+    </div>
+
+    <div id="upload-status" class="hidden">
+        <p>Загрузка может занять до нескольких минут...</p>
+        <div id="progress-container">
+            <div id="progress-bar">0%</div>
+        </div>
+    </div>
+
+    <div id="success-message" class="hidden">
+        <h3 style="color: green;">Файл успешно загружен!</h3>
+        <a href="/home"><button>На главную</button></a>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('file-input');
+        const metaFields = document.getElementById('meta-fields');
+        const titleInput = document.getElementById('title');
+        const descInput = document.getElementById('description');
+        const rightsCheckbox = document.getElementById('rights-checkbox');
+        const uploadBtn = document.getElementById('upload-btn');
+
+        const uploadStatus = document.getElementById('upload-status');
+        const progressBar = document.getElementById('progress-bar');
+        const successMessage = document.getElementById('success-message');
+
+        // 1. Показываем поля ввода, когда выбран файл
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                metaFields.classList.remove('hidden');
+                // Автоматически подставляем имя файла без расширения в поле "Название"
+                let fileName = this.files[0].name.replace('.glb', '');
+                titleInput.value = fileName;
+            } else {
+                metaFields.classList.add('hidden');
+            }
+        });
+
+        // 2. Активируем кнопку только при включенном чекбоксе
+        rightsCheckbox.addEventListener('change', function() {
+            uploadBtn.disabled = !this.checked;
+        });
+
+        // 3. Логика отправки файла с полосой загрузки
+        uploadBtn.addEventListener('click', function() {
+            const file = fileInput.files[0];
+            if (!file || !titleInput.value) {
+                alert("Пожалуйста, выберите файл и укажите название.");
+                return;
+            }
+
+            // Прячем форму, показываем статус загрузки
+            metaFields.classList.add('hidden');
+            fileInput.disabled = true;
+            uploadStatus.classList.remove('hidden');
+
+            // Упаковываем данные для отправки (Файл + Текст)
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('title', titleInput.value);
+            formData.append('description', descInput.value);
+
+            // Настраиваем XHR запрос
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/upload', true);
+
+            // Отслеживаем прогресс отправки
+            xhr.upload.onprogress = function(event) {
+                if (event.lengthComputable) {
+                    let percentComplete = Math.round((event.loaded / event.total) * 100);
+                    progressBar.style.width = percentComplete + '%';
+                    progressBar.textContent = percentComplete + '%';
+                }
+            };
+
+            // Когда загрузка завершена (ответ от сервера)
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    uploadStatus.classList.add('hidden');
+                    successMessage.classList.remove('hidden');
+                } else {
+                    alert('Ошибка загрузки: ' + xhr.responseText);
+                    // Возвращаем интерфейс обратно при ошибке
+                    uploadStatus.classList.add('hidden');
+                    metaFields.classList.remove('hidden');
+                    fileInput.disabled = false;
+                }
+            };
+
+            // Если пропал интернет
+            xhr.onerror = function() {
+                alert('Произошла ошибка сети во время загрузки.');
+            };
+
+            xhr.send(formData); // Отправляем на сервер!
+        });
+    </script>
+</body>
+</html>

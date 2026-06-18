@@ -1,5 +1,5 @@
-from flask import Blueprint, request, render_template, redirect, url_for, flash
-from werkzeug.security import generate_password_hash
+from flask import Blueprint, request, render_template, redirect, url_for, flash, session
+from werkzeug.security import generate_password_hash, check_password_hash
 from app.database import SessionLocal
 from app.models import User
 
@@ -59,5 +59,38 @@ def register():
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    # Пока ставим заглушку для страницы входа, чтобы работал редирект
+    if request.method == 'POST':
+        email = request.form.get('login')
+        password = request.form.get('password')
+
+        db = SessionLocal()
+        try:
+            # Ищем пользователя в базе по логину (email)
+            user = db.query(User).filter(User.email == email).first()
+
+            # Если пользователь найден И введенный пароль совпадает с хэшем в БД
+            if user and check_password_hash(user.password_hash, password):
+                # МАГИЯ АВТОРИЗАЦИИ: Записываем ID и имя в безопасную сессию
+                session['user_id'] = user.id
+                session['username'] = user.username
+
+                flash(f'Добро пожаловать, {user.username}!', 'success')
+                # Перенаправляем авторизованного пользователя на страницу загрузки моделей
+                return redirect(url_for('media.home'))
+            else:
+                flash('Неверный логин или пароль', 'error')
+                return redirect(url_for('auth.login'))
+        finally:
+            db.close()
+
+    # Если метод GET — просто отдаем HTML-страницу входа
     return render_template('login.html')
+
+
+@auth_bp.route('/logout')
+def logout():
+    # Очищаем все данные из сессии пользователя
+    session.clear()
+    flash('Вы успешно вышли из системы.', 'success')
+    # Перенаправляем обратно на страницу логина
+    return redirect(url_for('auth.login'))

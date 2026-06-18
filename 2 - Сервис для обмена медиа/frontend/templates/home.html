@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Главная - Лента 3D моделей</title>
+
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+
+    <style>
+        /* Сброс стилей и фон как в соцсетях */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; }
+
+        /* Закрепленная шапка (Navbar) */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo { font-size: 20px; font-weight: bold; color: #333; margin: 0; }
+
+        /* Кнопки в шапке */
+        .header-btn {
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            transition: opacity 0.2s;
+        }
+        .header-btn:hover { opacity: 0.8; }
+        .btn-upload { background-color: #1877f2; } /* Синий, как призыв к действию */
+        .btn-logout { background-color: #dc3545; } /* Красный для выхода */
+
+        /* Контейнер ленты */
+        .feed-container {
+            max-width: 600px;
+            margin: 20px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px; /* Отступ между карточками по вертикали */
+            padding: 0 10px;
+        }
+
+        /* Карточка одной модели */
+        .post-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            padding: 15px;
+        }
+
+        /* Настройки просмотрщика */
+        model-viewer {
+            width: 100%;
+            height: 400px;
+            background-color: #e9ecef;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        /* Подвал карточки с метаданными */
+        .post-info { margin-top: 15px; }
+        .post-title { font-size: 18px; font-weight: bold; margin: 0 0 8px 0; color: #1c1e21; }
+        .post-desc { font-size: 15px; color: #4b4f56; margin: 0 0 10px 0; }
+
+        .post-meta {
+            font-size: 13px;
+            color: #65676b;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid #e4e6eb;
+            padding-top: 10px;
+        }
+        .author-name { font-weight: 600; color: #1c1e21; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="/upload" class="header-btn btn-upload">➕ Загрузить</a>
+
+        <p class="logo">Лента моделей</p>
+
+        <a href="/logout" class="header-btn btn-logout">🚪 Выйти</a>
+    </header>
+
+    <div class="feed-container">
+        {% if models %}
+            {% for model in models %}
+            <div class="post-card">
+                <model-viewer
+                    src="/{{ model.file_path }}"
+                    camera-controls
+                    auto-rotate
+                    shadow-intensity="1">
+                </model-viewer>
+
+                <div class="post-info">
+                    <h3 class="post-title">{{ model.title }}</h3>
+
+                    {% if model.description %}
+                        <p class="post-desc">{{ model.description }}</p>
+                    {% endif %}
+
+                    <div class="post-meta">
+                        <span>Автор: <span class="author-name">{{ model.author.username }}</span></span>
+
+                        <span>{{ model.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div style="text-align: center; color: #65676b; margin-top: 50px;">
+                <h2>Лента пока пуста</h2>
+                <p>Нажмите "Загрузить", чтобы добавить первую 3D модель!</p>
+            </div>
+        {% endif %}
+    </div>
+
+</body>
+</html>
